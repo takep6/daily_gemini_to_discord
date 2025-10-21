@@ -1,0 +1,32 @@
+name: Daily Gemini to Discord
+
+on:
+  schedule:
+    - cron: "0 9 * * *"  # 毎日9時に実行（UTCなので注意）
+  workflow_dispatch:      # 手動実行も可能
+
+jobs:
+  run-gemini:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install gemini-cli
+        run: npm install -g @google/gemini-cli
+
+      - name: Run Gemini prompt
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          RESPONSE=$(gemini "今日の天気に合うポジティブなメッセージを教えて")
+          echo "$RESPONSE" > response.txt
+
+      - name: Send to Discord
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          curl -H "Content-Type: application/json" \
+            -d "{\"content\": \"$(cat response.txt)\"}" \
+            "$DISCORD_WEBHOOK"
