@@ -2,7 +2,9 @@ name: Daily Gemini to Discord
 
 on:
   schedule:
-    - cron: "0 9 * * *"  # 毎日9時に実行（UTCなので注意）
+    - cron: "0 3 * * *"  # 日本時間12:00（正午）
+    - cron: "0 9 * * *"  # 日本時間18:00（夕方）
+    - cron: "0 14 * * *" # 日本時間23:00（夜）
   workflow_dispatch:      # 手動実行も可能
 
 jobs:
