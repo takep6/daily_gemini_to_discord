@@ -29,11 +29,22 @@ jobs:
       - name: Install gemini-cli
         run: npm install -g @google/gemini-cli
 
+      - name: Prepare combined prompt
+        run: |
+          PROMPT_MAIN=$(cat .github/prompt.md)
+          HISTORY_FILE=".github/history.md"
+          if [ ! -f "$HISTORY_FILE" ]; then
+            echo "# 出力履歴" > "$HISTORY_FILE"
+          fi
+          PROMPT_COMBINED=$(printf "%s\n\n---\n# これまでの出力履歴（同じ内容を繰り返さないでください）\n%s" \
+            "$PROMPT_MAIN" "$(cat $HISTORY_FILE)")
+          echo "$PROMPT_COMBINED" > .github/combined_prompt.md
+
       - name: Run Gemini prompt
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          PROMPT=$(cat .github/prompt.md)
+          PROMPT=$(cat .github/combined_prompt.md)
           MAX_RETRIES=3
           for i in $(seq 1 $MAX_RETRIES); do
             if RESPONSE=$(gemini "$PROMPT"); then
@@ -49,7 +60,6 @@ jobs:
             exit 1
           fi
 
-
       - name: Send to Discord
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
@@ -58,3 +68,16 @@ jobs:
           curl -H "Content-Type: application/json" \
             -d "{\"content\": $RESPONSE}" \
             "$DISCORD_WEBHOOK"
+
+      - name: Append response to history
+        run: |
+          echo -e "\n\n## $(date '+%Y-%m-%d %H:%M:%S') の出力\n" >> .github/history.md
+          cat response.txt >> .github/history.md
+
+      - name: Commit updated history
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/history.md
+          git commit -m "Update history with latest Gemini output" || echo "No changes to commit"
+          git push
