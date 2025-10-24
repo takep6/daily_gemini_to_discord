@@ -36,7 +36,7 @@ jobs:
           PROMPT=$(cat .github/prompt.md)
           MAX_RETRIES=3
           for i in $(seq 1 $MAX_RETRIES); do
-            if RESPONSE=$(gemini "$PROMPT" --temperature 0.8); then
+            if RESPONSE=$(gemini -t 0.8 "$PROMPT" ); then
               echo "$RESPONSE" > response.txt
               break
             else
