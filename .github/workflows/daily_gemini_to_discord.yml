@@ -15,13 +15,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Cache npm
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-npm-gemini
-          restore-keys: |
-            ${{ runner.os }}-npm-
+      # - name: Cache npm
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: ~/.npm
+      #     key: ${{ runner.os }}-npm-gemini
+      #     restore-keys: |
+      #       ${{ runner.os }}-npm-
 
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y jq
@@ -36,7 +36,7 @@ jobs:
           PROMPT=$(cat .github/prompt.md)
           MAX_RETRIES=3
           for i in $(seq 1 $MAX_RETRIES); do
-            if RESPONSE=$(gemini -t 0.8 "$PROMPT" ); then
+            if RESPONSE=$(gemini "$PROMPT"); then
               echo "$RESPONSE" > response.txt
               break
             else
