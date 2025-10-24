@@ -34,11 +34,20 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           PROMPT=$(cat .github/prompt.md)
-          for i in {1..3}; do
-            RESPONSE=$(gemini "$PROMPT") && echo "$RESPONSE" > response.txt && break
-            echo "Gemini API call failed. Retrying ${i} times..."
-            sleep 30
+          MAX_RETRIES=3
+          for i in $(seq 1 $MAX_RETRIES); do
+            if RESPONSE=$(gemini "$PROMPT"); then
+              echo "$RESPONSE" > response.txt
+              break
+            else
+              echo "Gemini API call failed. Retrying ${i}/${MAX_RETRIES} times..."
+              sleep 30
+            fi
           done
+          if [ ! -f response.txt ]; then
+            echo "All Gemini API call attempts failed. Exiting."
+            exit 1
+          fi
 
 
       - name: Send to Discord
