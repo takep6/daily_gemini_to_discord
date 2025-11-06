@@ -69,15 +69,37 @@ jobs:
             -d "{\"content\": $RESPONSE}" \
             "$DISCORD_WEBHOOK"
 
-      - name: Append response to history
+      - name: Save response to dated archive file
         run: |
-          echo -e "\n\n## $(date '+%Y-%m-%d %H:%M:%S') の出力\n" >> .github/history.md
-          cat response.txt >> .github/history.md
+          ARCHIVE_DIR=".github/archives"
+          mkdir -p $ARCHIVE_DIR
+          DATE_STAMP=$(date +'%Y%m%d')
+          ARCHIVE_FILE="$ARCHIVE_DIR/${DATE_STAMP}_history.md"
+          echo -e "## $(date '+%Y-%m-%d %H:%M:%S') の出力\n" > "$ARCHIVE_FILE"
+          cat response.txt >> "$ARCHIVE_FILE"
 
-      - name: Commit updated history
+      - name: Summarize response for history.md
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          RESPONSE_CONTENT=$(cat response.txt)
+          SUMMARY_PROMPT="以下の内容を3行で要約してください。\n\n$RESPONSE_CONTENT"
+          MAX_RETRIES=3
+          for i in $(seq 1 $MAX_RETRIES); do
+            if SUMMARY=$(gemini "$SUMMARY_PROMPT"); then
+              echo -e "\n\n## $(date '+%Y-%m-%d %H:%M:%S') の要約\n" >> .github/history.md
+              echo "$SUMMARY" >> .github/history.md
+              break
+            else
+              echo "Gemini API call for summary failed. Retrying ${i}/${MAX_RETRIES} times..."
+              sleep 30
+            fi
+          done
+
+      - name: Commit updated history and archive
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .github/history.md
-          git commit -m "Update history with latest Gemini output" || echo "No changes to commit"
+          git add .github/history.md .github/archives/
+          git commit -m "Update history and archive with latest Gemini output" || echo "No changes to commit"
           git push
