@@ -75,7 +75,7 @@ jobs:
           mkdir -p $ARCHIVE_DIR
           DATE_STAMP=$(date +'%Y%m%d')
           ARCHIVE_FILE="$ARCHIVE_DIR/${DATE_STAMP}_history.md"
-          echo -e "## $(date '+%Y-%m-%d %H:%M:%S') の出力\n" > "$ARCHIVE_FILE"
+          echo -e "\n\n## $(date '+%Y-%m-%d %H:%M:%S') の出力\n" >> "$ARCHIVE_FILE"
           cat response.txt >> "$ARCHIVE_FILE"
 
       - name: Summarize response for history.md
