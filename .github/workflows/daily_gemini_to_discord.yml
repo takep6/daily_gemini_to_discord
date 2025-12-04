@@ -66,7 +66,7 @@ jobs:
         run: |
           RESPONSE=$(cat response.txt | jq -Rs .)
           curl -H "Content-Type: application/json" \
-            -d "{\"content\": $RESPONSE}" \
+            -d "{\"username\":\"メイドちゃん\",\"avatar_url\":\"https://github.com/user-attachments/assets/3ca7c567-d634-4c19-8559-83a4ab23731e\",\"content\": $RESPONSE}" \
             "$DISCORD_WEBHOOK"
 
       - name: Save response to dated archive file
